@@ -37,29 +37,31 @@ spring:
       type: pgvector
       pgvector:
         # 默认不在启动时建扩展/建表；本地首次初始化时可设置 PGVECTOR_INITIALIZE_SCHEMA=true。
-        initialize-schema: false
+        initialize-schema: true # 开发环境设置为 true，方便快速启动。生产环境设置为 false，手动管理数据库 schema，避免意外变更。
         schema-name: public
         table-name: vector_store
         # 维度需要与 spring.ai.openai.embedding.dimensions 保持一致。
         dimensions: 1024
         index-type: HNSW
         distance-type: COSINE_DISTANCE
-        remove-existing-vector-store-table: false
+        remove-existing-vector-store-table: false # 保留现有表和数据
         schema-validation: false
         max-document-batch-size: 10000
 
 app:
+  storage:
+    knowledge-base-dir: ${user.home}/.ai-rag/knowledgebase
   pgvector:
     # PGVector 独立数据源：由 PgVectorDataSourceConfiguration 绑定，避免占用默认 MySQL 数据源。
     datasource:
       driver-class-name: org.postgresql.Driver
-      url: jdbc:postgresql://localhost:5433/postgres
+      url: jdbc:postgresql://localhost:5433/vectordb
       username: postgres
       password: postgres
 
-mybatis:
-  # Mapper XML 放在 src/main/resources/mapper 下时会被自动扫描。
+
+mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml
-  # 数据库字段使用下划线，Java 字段使用驼峰时开启自动映射。
   configuration:
     map-underscore-to-camel-case: true
+

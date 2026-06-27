@@ -18,8 +18,8 @@
         <java.version>17</java.version>
         <spring-cloud.version>2025.1.1</spring-cloud.version>
         <spring-ai.version>2.0.0</spring-ai.version>
-        <mybatis-spring-boot.version>4.0.0</mybatis-spring-boot.version>
         <postgresql.version>42.7.10</postgresql.version>
+        <mybatis.version>3.5.15</mybatis.version>
     </properties>
 
     <dependencies>
@@ -54,12 +54,12 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- MyBatis Spring Boot Starter -->
-        <dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>${mybatis-spring-boot.version}</version>
-        </dependency>
+<!--        &lt;!&ndash; MyBatis Spring Boot Starter &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.mybatis.spring.boot</groupId>-->
+<!--            <artifactId>mybatis-spring-boot-starter</artifactId>-->
+<!--            <version>${mybatis-spring-boot.version}</version>-->
+<!--        </dependency>-->
 
         <!-- Bean validation support for request DTOs -->
         <dependency>
@@ -119,6 +119,11 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-jsoup-document-reader</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
+            <version>${mybatis.version}</version>
         </dependency>
     </dependencies>
 
