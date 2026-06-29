@@ -6,6 +6,7 @@ import org.example.airag.common.exception.BusinessException;
 import org.example.airag.common.exception.ErrorCode;
 import org.example.airag.common.file.LocalFileStorageService;
 import org.example.airag.modules.knowledgebase.entity.KnowledgeBase;
+import org.example.airag.modules.knowledgebase.service.FileStorageService;
 import org.example.airag.modules.knowledgebase.service.KnowledgeBaseService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class KnowledgeBaseDeleteService {
     private final KnowledgeBaseService knowledgeBaseService;
     private final LocalFileStorageService localFileStorageService;
     private final ObjectProvider<KnowledgeBaseVectorService> vectorServiceProvider;
+    private final FileStorageService fileStorageService;
 
     /**
      * 删除知识库。
@@ -72,7 +74,8 @@ public class KnowledgeBaseDeleteService {
      */
     private void deleteLocalFile(String storagePath) {
         try {
-            localFileStorageService.deleteFile(storagePath);
+//            localFileStorageService.deleteFile(storagePath);
+            fileStorageService.deleteFile(storagePath);
         } catch (Exception e) {
             log.warn("知识库记录已删除，但本地文件清理失败，可后续手动补偿: storagePath={}, error={}",
                     storagePath, e.getMessage(), e);

@@ -13,6 +13,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Objects;
@@ -202,5 +203,41 @@ public class KnowledgeBaseQueryService {
     private String getMetadataValue(Document document, String key) {
         Object value = document.getMetadata().get(key);
         return value == null ? "" : value.toString();
+    }
+
+    /**
+     * 流式知识库查询
+     * @param request
+     * @return
+     */
+    public Flux<String> queryKnowledgeBaseStream(QueryRequest request) {
+        // 1. 参数处理
+        List<Long> knowledgeBaseIds = normalizeKnowledgeBaseIds(request.knowledgeBaseIds());
+        String question = normalizeQuestion(request.question());
+        // 2. 获取向量检索服务
+        if (knowledgeBaseIds.isEmpty() || !StringUtils.hasText(question)) {
+            return Flux.just(NO_RESULT_RESPONSE);
+        }
+        KnowledgeBaseVectorService vectorService = requireVectorService();
+        ChatClient chatClient = requireChatClient();
+        // 3. 获取相似文档
+        List<Document> relevantDocs = vectorService.similaritySearch(
+                question,
+                knowledgeBaseIds,
+                DEFAULT_TOP_K,
+                DEFAULT_MIN_SCORE
+        );
+        if (relevantDocs.isEmpty()) {
+            return Flux.just(NO_RESULT_RESPONSE);
+        }
+        // 4. 拼接知识库名称
+        String context = buildContext(relevantDocs);
+        // 5. 构建用户提示
+        return chatClient.prompt()
+                .system(buildSystemPrompt())
+                .user(buildUserPrompt(context, question))
+                .stream()
+                .content()
+                .onErrorResume(e -> Flux.just("【错误】知识库查询失败：" + e.getMessage()));
     }
 }

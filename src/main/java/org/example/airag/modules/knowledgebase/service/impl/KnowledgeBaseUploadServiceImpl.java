@@ -14,6 +14,7 @@ import org.example.airag.modules.knowledgebase.model.VectorStatus;
 import org.example.airag.modules.knowledgebase.service.FileStorageService;
 import org.example.airag.modules.knowledgebase.service.KnowledgeBaseService;
 import org.example.airag.modules.knowledgebase.service.KnowledgeBaseUploadService;
+import org.example.airag.modules.knowledgebase.service.KnowledgeBaseVectorTaskService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,7 +39,7 @@ public class KnowledgeBaseUploadServiceImpl implements KnowledgeBaseUploadServic
     private final ContentTypeDetectionService contentTypeDetectionService;
     private final FileHashService fileHashService;
     private final DocumentParseService documentParseService;
-    private final LocalFileStorageService localFileStorageService;
+    private final KnowledgeBaseVectorTaskService vectorTaskService;
     private final ObjectProvider<KnowledgeBaseVectorService> vectorServiceProvider;
     private final FileStorageService fileStorageService;
 
@@ -75,10 +76,10 @@ public class KnowledgeBaseUploadServiceImpl implements KnowledgeBaseUploadServic
         }
 
         // 6. 解析文本，先确保文件不是“空内容”。
-        String content = documentParseService.parseContent(file);
-        if (content == null || content.isBlank()) {
-            throw new BusinessException(ErrorCode.KNOWLEDGE_BASE_PARSE_FAILED, "无法从文件中提取文本内容");
-        }
+//        String content = documentParseService.parseContent(file);
+//        if (content == null || content.isBlank()) {
+//            throw new BusinessException(ErrorCode.KNOWLEDGE_BASE_PARSE_FAILED, "无法从文件中提取文本内容");
+//        }
 
         // 7. 保存原始文件到本地，MySQL 中只存相对路径。
 //        String storagePath = localFileStorageService.saveKnowledgeBase(file);
@@ -89,19 +90,19 @@ public class KnowledgeBaseUploadServiceImpl implements KnowledgeBaseUploadServic
             knowledgeBaseService.save(kb);
         } catch (Exception e) {
             // 元数据入库失败时清理已经落盘的本地文件，避免形成无主文件。
-            localFileStorageService.deleteFile(storagePath);
+//            localFileStorageService.deleteFile(storagePath);
+            fileStorageService.deleteFile(storagePath);
             throw e;
         }
 
         log.info("保存知识库元数据成功: kbId={}, name={}", kb.getId(), kb.getName());
 
         // 8. 同步执行向量化，方法内部会维护 PROCESSING/COMPLETED/FAILED 状态。
-        vectorizeKnowledgeBase(kb, content);
-
+//        vectorizeKnowledgeBase(kb, content);
+        vectorTaskService.createVectorizeTask(kb.getId());
         return Map.of(
                 "duplicate", false,
-                "knowledgeBase", kb,
-                "contentLength", content.length()
+                "knowledgeBase", kb
         );
     }
 
@@ -109,23 +110,28 @@ public class KnowledgeBaseUploadServiceImpl implements KnowledgeBaseUploadServic
     public void revectorize(Long id) {
         KnowledgeBase kb = getActiveKnowledgeBase(id);
         log.info("开始重新向量化知识库: kbId={}, name={}", kb.getId(), kb.getName());
-
-        try {
-            // 重新向量化必须基于原始文件重新解析，避免复用已经过期的文本内容。
-            String content = parseStoredKnowledgeBase(kb);
-            vectorizeKnowledgeBase(kb, content);
-        } catch (BusinessException e) {
-            // 文件丢失或解析失败时也要落库状态，方便列表页直接看到失败原因。
-            markVectorFailed(kb, e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            markVectorFailed(kb, e.getMessage());
-            throw new BusinessException(
-                    ErrorCode.KNOWLEDGE_BASE_VECTORIZATION_FAILED,
-                    "重新向量化失败: " + e.getMessage(),
-                    e
-            );
-        }
+        kb.setVectorStatus(VectorStatus.PENDING.name());
+        kb.setVectorError(null);
+        kb.setUpdatedAt(LocalDateTime.now());
+        knowledgeBaseService.updateById(kb);
+        // 创建向量化任务
+        vectorTaskService.createVectorizeTask(id);
+//        try {
+//            // 重新向量化必须基于原始文件重新解析，避免复用已经过期的文本内容。
+//            String content = parseStoredKnowledgeBase(kb);
+//            vectorizeKnowledgeBase(kb, content);
+//        } catch (BusinessException e) {
+//            // 文件丢失或解析失败时也要落库状态，方便列表页直接看到失败原因。
+//            markVectorFailed(kb, e.getMessage());
+//            throw e;
+//        } catch (Exception e) {
+//            markVectorFailed(kb, e.getMessage());
+//            throw new BusinessException(
+//                    ErrorCode.KNOWLEDGE_BASE_VECTORIZATION_FAILED,
+//                    "重新向量化失败: " + e.getMessage(),
+//                    e
+//            );
+//        }
     }
 
     /**
@@ -150,7 +156,8 @@ public class KnowledgeBaseUploadServiceImpl implements KnowledgeBaseUploadServic
      * 从本地存储读取原文件并重新解析文本内容。
      */
     private String parseStoredKnowledgeBase(KnowledgeBase kb) {
-        byte[] fileBytes = localFileStorageService.downloadFile(kb.getStoragePath());
+//        byte[] fileBytes = localFileStorageService.downloadFile(kb.getStoragePath());
+        byte[] fileBytes = fileStorageService.downloadFile(kb.getStoragePath());
         String content = documentParseService.parseContent(fileBytes, kb.getOriginalFilename());
         if (content == null || content.isBlank()) {
             throw new BusinessException(ErrorCode.KNOWLEDGE_BASE_PARSE_FAILED, "无法从知识库原文件中提取文本内容");
@@ -176,6 +183,9 @@ public class KnowledgeBaseUploadServiceImpl implements KnowledgeBaseUploadServic
         kb.setDelFlag(0);
         kb.setCreatedAt(LocalDateTime.now());
         kb.setUpdatedAt(LocalDateTime.now());
+        kb.setQuestionCount(0L);
+        kb.setAccessCount(0L);
+        kb.setLastAccessedAt(null);
         return kb;
     }
 
@@ -265,5 +275,9 @@ public class KnowledgeBaseUploadServiceImpl implements KnowledgeBaseUploadServic
         }
         return message.length() > 500 ? message.substring(0, 500) : message;
     }
-
+    public void vectorizeKnowledgeBase(Long id) {
+        KnowledgeBase kb = getActiveKnowledgeBase(id);
+        String content = parseStoredKnowledgeBase(kb);
+        vectorizeKnowledgeBase(kb, content);
+    }
 }

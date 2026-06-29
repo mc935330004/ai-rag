@@ -9,6 +9,7 @@ import org.example.airag.modules.knowledgebase.dto.KnowledgeBaseListItemDTO;
 import org.example.airag.modules.knowledgebase.dto.KnowledgeBaseStatsDTO;
 import org.example.airag.modules.knowledgebase.entity.KnowledgeBase;
 import org.example.airag.modules.knowledgebase.model.VectorStatus;
+import org.example.airag.modules.knowledgebase.service.FileStorageService;
 import org.example.airag.modules.knowledgebase.service.KnowledgeBaseService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class KnowledgeBaseListService {
 
     private final KnowledgeBaseService knowledgeBaseService;
     private final LocalFileStorageService localFileStorageService;
+    private final FileStorageService fileStorageService;
     /**
      * 获取知识库列表，支持向量状态过滤和简单排序。
      * @ param keyword 关键字，支持模糊匹配
@@ -37,7 +39,7 @@ public class KnowledgeBaseListService {
         List<KnowledgeBase> knowledgeBases = knowledgeBaseService.lambdaQuery()
                 .eq(KnowledgeBase::getDelFlag, 0)
                 .eq(StringUtils.hasText(vectorStatus), KnowledgeBase::getVectorStatus, normalizeStatus(vectorStatus))
-                .and(!StringUtils.hasText(keyword),wrapper -> wrapper
+                .and(StringUtils.hasText(keyword),wrapper -> wrapper
                         .like(KnowledgeBase::getName, keyword.trim())
                         .or()
                         .like(KnowledgeBase::getOriginalFilename, keyword.trim())
@@ -135,7 +137,8 @@ public class KnowledgeBaseListService {
         // 复用本地文件存储服务，避免 Controller 直接关心磁盘路径。
         log.info("下载知识库文件: kbId={}, filename={}", kb.getId(), kb.getOriginalFilename());
 
-        return localFileStorageService.downloadFile(kb.getStoragePath());
+//        return localFileStorageService.downloadFile(kb.getStoragePath());
+        return fileStorageService.downloadFile(kb.getStoragePath());
     }
 
     /**

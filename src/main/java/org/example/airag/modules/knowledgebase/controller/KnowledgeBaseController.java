@@ -7,10 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.airag.common.result.Result;
 import org.example.airag.modules.knowledgebase.dto.KnowledgeBaseListItemDTO;
 import org.example.airag.modules.knowledgebase.dto.KnowledgeBaseStatsDTO;
+import org.example.airag.modules.knowledgebase.dto.VectorStatusDTO;
+import org.example.airag.modules.knowledgebase.dto.VectorTaskDTO;
 import org.example.airag.modules.knowledgebase.entity.KnowledgeBase;
 import org.example.airag.modules.knowledgebase.model.QueryRequest;
 import org.example.airag.modules.knowledgebase.model.QueryResponse;
+import org.example.airag.modules.knowledgebase.service.FileStorageService;
 import org.example.airag.modules.knowledgebase.service.KnowledgeBaseUploadService;
+import org.example.airag.modules.knowledgebase.service.KnowledgeBaseVectorTaskService;
 import org.example.airag.modules.knowledgebase.service.impl.KnowledgeBaseDeleteService;
 import org.example.airag.modules.knowledgebase.service.impl.KnowledgeBaseListService;
 import org.example.airag.modules.knowledgebase.service.impl.KnowledgeBaseQueryService;
@@ -20,9 +24,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +46,8 @@ public class KnowledgeBaseController {
     private final KnowledgeBaseQueryService queryService;
     private final KnowledgeBaseListService listService;
     private final KnowledgeBaseDeleteService deleteService;
+    private final FileStorageService fileStorageService;
+    private final KnowledgeBaseVectorTaskService vectorTaskService;
     /**
      * 上传知识库文件
      * @param file
@@ -63,6 +71,16 @@ public class KnowledgeBaseController {
     @PostMapping("/query")
     public Result<QueryResponse> queryKnowledgeBase(@Valid @RequestBody QueryRequest request) {
         return Result.success(queryService.queryKnowledgeBase(request));
+    }
+
+    /**
+     * 知识库流式查询
+     * @param request
+     * @return
+     */
+    @PostMapping(value = "/query/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> queryKnowledgeBaseStream(@Valid @RequestBody QueryRequest request) {
+        return queryService.queryKnowledgeBaseStream(request);
     }
 
     /**
@@ -146,8 +164,8 @@ public class KnowledgeBaseController {
      *
      * <p>分类名如果是中文，前端请求时需要 URL 编码。</p>
      */
-    @GetMapping("/category/{category}")
-    public Result getByCategory(@PathVariable String category) {
+    @GetMapping("/category")
+    public Result getByCategory(@RequestParam(value = "category") String category) {
         return Result.success(listService.listByCategory(category));
     }
 
@@ -156,7 +174,7 @@ public class KnowledgeBaseController {
      *
      * <p>请求体示例：{"category":"技术文档"}；传空字符串表示清空分类。</p>
      */
-    @GetMapping("/category")
+    @GetMapping("/updateCategory")
     public Result<Void> updateCategory(@RequestParam(value ="id") Long id,
                                        @RequestParam(value = "category") String category) {
         listService.updateCategory(id, category);
@@ -169,5 +187,54 @@ public class KnowledgeBaseController {
     @GetMapping("/stats")
     public Result<KnowledgeBaseStatsDTO> getStatistics() {
         return Result.success(listService.getStatistics());
+    }
+
+    /**
+     * 获取向量化状态
+     * @param id
+     * @return
+     */
+    @GetMapping("/getVectorStatus/{id}")
+    public Result<VectorStatusDTO> getVectorStatus(@PathVariable Long id) {
+        KnowledgeBase kb = listService.getEntityForDownload(id);
+        return Result.success(new VectorStatusDTO(
+                kb.getId(),
+                kb.getVectorStatus(),
+                kb.getVectorError(),
+                kb.getChunkCount()
+        ));
+    }
+
+    /**
+     * 获取向量化任务列表
+     * @param status
+     * @param knowledgeBaseId
+     * @return
+     */
+    @GetMapping("/vectorTasks")
+    public Result<List<VectorTaskDTO>> listVectorTasks(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "knowledgeBaseId", required = false) Long knowledgeBaseId) {
+        return Result.success(vectorTaskService.listTasks(status, knowledgeBaseId));
+    }
+
+    /**
+     * 重新向量化任务
+     * @param taskId
+     * @return
+     */
+    @PostMapping("/retryVectorTask/{taskId}")
+    public Result<Void> retryVectorTask(@PathVariable Long taskId) {
+        vectorTaskService.retryTask(taskId);
+        return Result.success("重新向量化任务成功！");
+    }
+
+    /**
+     * 测试文件上传接口
+     */
+    @PostMapping("/upload/test")
+    public Result uploadTest(MultipartFile file){
+        fileStorageService.saveKnowledgeBase(file);
+        return Result.success("上传成功！");
     }
 }

@@ -70,6 +70,21 @@ public class KnowledgeBase implements Serializable {
     private Integer chunkCount;
 
     /**
+     * 问题数量
+     */
+    private Long questionCount;
+
+    /**
+     * 访问次数
+     */
+    private Long accessCount;
+
+    /**
+     * 最后访问时间
+     */
+    private LocalDateTime lastAccessedAt;
+
+    /**
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)

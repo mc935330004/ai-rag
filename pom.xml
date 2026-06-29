@@ -21,6 +21,7 @@
         <postgresql.version>42.7.10</postgresql.version>
         <mybatis.version>3.5.15</mybatis.version>
         <commons-net.version>3.11.1</commons-net.version>
+        <flyway.version>12.3.0</flyway.version>
     </properties>
 
     <dependencies>
@@ -131,6 +132,12 @@
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>${commons-net.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+            <version>${flyway.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
