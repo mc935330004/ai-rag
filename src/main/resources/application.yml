@@ -54,16 +54,30 @@ spring:
 app:
   storage:
     knowledge-base-dir: ${user.home}/.ai-rag/knowledgebase
+    # FTP配置
+    ftp:
+      #  ftpIp: 172.30.1.17
+      host: 221.6.20.82
+      username: projectm
+      password: ${FTP_PASSWORD}
+      port: 21
+      base-dir: projectm/knowledgebase/
+      pathUrl: https://pmz.e-jt.cn/project/
+      connect-timeout-ms: 10000
+      data-timeout-ms: 30000
   pgvector:
     # PGVector 独立数据源：由 PgVectorDataSourceConfiguration 绑定，避免占用默认 MySQL 数据源。
     datasource:
       driver-class-name: org.postgresql.Driver
-      url: jdbc:postgresql://localhost:5432/vectordb
+#      url: jdbc:postgresql://localhost:5432/vectordb
+      url: jdbc:postgresql://localhost:5433/postgres
       username: postgres
-#      password: postgres
-      password: pgvector
+      password: postgres
+#      password: pgvector
 
 
+
+#mybatis-plus
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml
   configuration:

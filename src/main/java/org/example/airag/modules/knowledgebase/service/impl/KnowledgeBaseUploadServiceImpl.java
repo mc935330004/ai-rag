@@ -11,6 +11,7 @@ import org.example.airag.common.file.FileValidationService;
 import org.example.airag.common.file.LocalFileStorageService;
 import org.example.airag.modules.knowledgebase.entity.KnowledgeBase;
 import org.example.airag.modules.knowledgebase.model.VectorStatus;
+import org.example.airag.modules.knowledgebase.service.FileStorageService;
 import org.example.airag.modules.knowledgebase.service.KnowledgeBaseService;
 import org.example.airag.modules.knowledgebase.service.KnowledgeBaseUploadService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -39,6 +40,7 @@ public class KnowledgeBaseUploadServiceImpl implements KnowledgeBaseUploadServic
     private final DocumentParseService documentParseService;
     private final LocalFileStorageService localFileStorageService;
     private final ObjectProvider<KnowledgeBaseVectorService> vectorServiceProvider;
+    private final FileStorageService fileStorageService;
 
     /**
      * 上传知识库文件，并在元数据保存成功后同步执行向量化。
@@ -79,7 +81,8 @@ public class KnowledgeBaseUploadServiceImpl implements KnowledgeBaseUploadServic
         }
 
         // 7. 保存原始文件到本地，MySQL 中只存相对路径。
-        String storagePath = localFileStorageService.saveKnowledgeBase(file);
+//        String storagePath = localFileStorageService.saveKnowledgeBase(file);
+        String storagePath = fileStorageService.saveKnowledgeBase(file);
 
         KnowledgeBase kb = buildKnowledgeBase(file, name, category, contentType, fileHash, storagePath);
         try {
