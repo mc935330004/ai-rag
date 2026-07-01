@@ -11,25 +11,6 @@ import java.util.List;
  */
 public interface KnowledgeBaseVectorTaskService extends IService<KnowledgeBaseVectorTask> {
 
-    /**
-     * 创建向量化任务
-     * @param knowledgeBaseId
-     */
-    void createVectorizeTask(Long knowledgeBaseId);
-
-    /**
-     * 列出向量化任务
-     * @param status
-     * @param knowledgeBaseId
-     * @return
-     */
-     List<VectorTaskDTO> listTasks(String status, Long knowledgeBaseId);
-
-     /**
-     * 重试向量化任务
-     * @param taskId
-     */
-     void retryTask(Long taskId);
 
     /**
      * 创建文档版本向量化任务。

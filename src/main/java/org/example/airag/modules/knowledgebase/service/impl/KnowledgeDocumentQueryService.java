@@ -13,18 +13,17 @@ import org.example.airag.modules.knowledgebase.service.KnowledgeChunkService;
 import org.example.airag.modules.knowledgebase.service.KnowledgeDocumentService;
 import org.example.airag.modules.KnowledgeLog.service.KnowledgeQueryLogService;
 import org.example.airag.modules.KnowledgeLog.service.KnowledgeQueryReferenceService;
-import org.flywaydb.core.internal.util.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
 import static org.springframework.util.StringUtils.truncate;
 
 /**

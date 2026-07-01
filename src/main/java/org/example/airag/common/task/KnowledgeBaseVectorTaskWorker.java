@@ -7,7 +7,6 @@ import org.example.airag.modules.knowledgebase.mapper.KnowledgeBaseVectorTaskMap
 import org.example.airag.modules.knowledgebase.model.VectorTaskStatus;
 import org.example.airag.modules.knowledgebase.service.KnowledgeBaseVectorTaskService;
 import org.example.airag.modules.knowledgebase.service.KnowledgeDocumentVersionService;
-import org.example.airag.modules.knowledgebase.service.impl.KnowledgeBaseUploadServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,7 +24,6 @@ import java.util.UUID;
 public class KnowledgeBaseVectorTaskWorker {
     private final KnowledgeBaseVectorTaskService taskService;
     private final KnowledgeBaseVectorTaskMapper taskMapper;
-    private final KnowledgeBaseUploadServiceImpl uploadService;
     private final KnowledgeDocumentVersionService knowledgeDocumentVersionService;
 
     private final String workerId = buildWorkerId();
@@ -73,9 +71,6 @@ public class KnowledgeBaseVectorTaskWorker {
             if (task.getVersionId() != null) {
                 // 新企业文档版本流程
                 knowledgeDocumentVersionService.vectorizeVersion(task.getVersionId());
-            } else {
-                // 旧 knowledge_base 流程，保留兼容
-                uploadService.vectorizeKnowledgeBase(task.getKnowledgeBaseId());
             }
             markCompleted(task);
         } catch (Exception e) {
