@@ -149,10 +149,7 @@ public class KnowledgeBaseVectorService {
             builder.filterExpression(buildKbFilterExpression(knowledgeBaseIds));
         }
         List<Document> results = vectorStore.similaritySearch(builder.build());
-        if (results == null) {
-            return List.of();
-        }
-        return results.stream()
+            return results.stream()
                 .limit(topK)
                 .collect(Collectors.toList());
         }catch (Exception e){
@@ -189,5 +186,47 @@ public class KnowledgeBaseVectorService {
             return;
         }
         vectorRepository.deleteByKnowledgeBaseId(knowledgeBaseId);
+    }
+
+    /**
+     * 基于企业文档版本ID检索向量。
+     *
+     * 新企业文档链路写入向量时，metadata 中包含 version_id。
+     * 正式问答只应该传入已发布文档的 currentVersionId，避免草稿、废止版本进入回答。
+     */
+    public List<Document> similaritySearchByVersionIds(String query,List<Long> versionIds,int topK,
+            double minScore) {
+        if (query == null || query.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "问题不能为空");
+        }
+        if (versionIds == null || versionIds.isEmpty()) {
+            return List.of();
+        }
+        SearchRequest.Builder builder = SearchRequest.builder()
+                .query(query.trim())
+                .topK(Math.max(topK, 1));
+        if (minScore > 0) {
+            builder.similarityThreshold(minScore);
+        }
+        // 按 version_id metadata 过滤，只查指定版本。
+        builder.filterExpression(buildVersionFilterExpression(versionIds));
+        List<Document> results = vectorStore.similaritySearch(builder.build());
+        return results.stream()
+                        .limit(topK)
+                        .toList();
+    }
+
+    /**
+     * 构建 PGVector metadata 过滤条件。
+     *
+     * metadata.version_id 在 KnowledgeDocumentVersionServiceImpl.writeVectors() 中写入。
+     */
+    private String buildVersionFilterExpression(List<Long> versionIds) {
+        String values = versionIds.stream()
+                .filter(Objects::nonNull)
+                .map(String::valueOf)
+                .map(id -> "'" + id + "'")
+                .collect(Collectors.joining(", "));
+        return "version_id in [" + values + "]";
     }
 }

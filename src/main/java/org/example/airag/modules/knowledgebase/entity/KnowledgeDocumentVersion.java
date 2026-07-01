@@ -59,12 +59,12 @@ public class KnowledgeDocumentVersion implements Serializable {
     private String storagePath;
 
     /**
-     * 解析状态：PENDING、PROCESSING、COMPLETED、FAILED
+     * 解析状态：PENDING待处理，PROCESSING处理中，COMPLETED成功，FAILED失败
      */
     private String parseStatus;
 
     /**
-     * 向量化状态：PENDING、PROCESSING、COMPLETED、FAILED
+     * 向量化状态：PENDING待处理，PROCESSING处理中，COMPLETED成功，FAILED失败
      */
     private String vectorStatus;
 

@@ -15,34 +15,34 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/knowledge/document-versions")
+@RequestMapping("/api/knowledge/versions")
 @RequiredArgsConstructor
 public class KnowledgeDocumentVersionController {
 
     private final KnowledgeDocumentVersionService versionService;
 
-    @GetMapping("/page")
-    public Result<Page<KnowledgeDocumentVersion>> page(Page<KnowledgeDocumentVersion> page) {
-        return Result.success(versionService.page(page));
+
+    /**
+     * 发布文档版本
+     * @param documentId
+     * @param versionId
+     * @return
+     */
+    @GetMapping("/{documentId}/versions/{versionId}/publish")
+    public Result<Void> publishVersion( @PathVariable Long documentId,@PathVariable Long versionId) {
+        versionService.publishVersion(documentId, versionId);
+        return Result.success("文档版本发布成功");
     }
 
-    @GetMapping("/{id}")
-    public Result<KnowledgeDocumentVersion> detail(@PathVariable Long id) {
-        return Result.success(versionService.getById(id));
-    }
-
-    @PostMapping
-    public Result<Boolean> create(@RequestBody KnowledgeDocumentVersion version) {
-        return Result.success(versionService.save(version));
-    }
-
-    @PutMapping
-    public Result<Boolean> update(@RequestBody KnowledgeDocumentVersion version) {
-        return Result.success(versionService.updateById(version));
-    }
-
-    @DeleteMapping("/{id}")
-    public Result<Boolean> delete(@PathVariable Long id) {
-        return Result.success(versionService.removeById(id));
+    /**
+     * 重新向量化文档版本
+     * @param documentId
+     * @param versionId
+     * @return
+     */
+    @GetMapping("/{documentId}/versions/{versionId}/revectorize")
+    public Result<Void> revectorizeVersion(@PathVariable Long documentId,@PathVariable Long versionId) {
+        versionService.revectorizeVersion(documentId, versionId);
+        return Result.success("文档版本重新向量化任务已创建");
     }
 }

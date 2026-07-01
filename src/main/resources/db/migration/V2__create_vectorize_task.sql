@@ -23,9 +23,10 @@ CREATE TABLE IF NOT EXISTS knowledge_base_vector_task (
 
     started_at DATETIME COMMENT '任务开始执行时间',
 
-    finished_at DATETIME COMMENT '任务执行完成时间'
+    finished_at DATETIME COMMENT '任务执行完成时间',
+    document_id BIGINT NULL COMMENT '企业知识文档ID，对应 knowledge_document.id',
+    version_id BIGINT NULL COMMENT '企业知识文档版本ID，对应 knowledge_document_version.id'
     ) COMMENT = '知识库向量化任务表，用于异步处理文档解析、切片、Embedding生成和向量入库任务';
-
 
 CREATE INDEX idx_vector_task_status_created
     ON knowledge_base_vector_task (status, created_at);

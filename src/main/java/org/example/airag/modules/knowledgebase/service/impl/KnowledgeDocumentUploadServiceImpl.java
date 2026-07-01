@@ -13,6 +13,7 @@ import org.example.airag.modules.knowledgebase.model.VectorStatus;
 import org.example.airag.modules.knowledgebase.service.*;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -37,6 +38,7 @@ public class KnowledgeDocumentUploadServiceImpl implements KnowledgeDocumentUplo
      * 上传企业知识文档，并创建文档版本和向量化任务。
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public KnowledgeDocumentUploadResponse upload(KnowledgeDocumentUploadRequest request) {
         var file = request.getFile();
         // 1. 校验文件大小、空文件等基础规则

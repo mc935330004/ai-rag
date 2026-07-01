@@ -93,7 +93,7 @@ public class KnowledgeBaseVectorTaskServiceImpl extends ServiceImpl<KnowledgeBas
         if (documentId == null || versionId == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "文档ID和版本ID不能为空");
         }
-
+        // 创建向量化任务
         KnowledgeBaseVectorTask task = new KnowledgeBaseVectorTask();
         task.setKnowledgeBaseId(null);
         task.setDocumentId(documentId);

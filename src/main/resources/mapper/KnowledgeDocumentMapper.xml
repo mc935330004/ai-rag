@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.airag.modules.knowledgebase.mapper.KnowledgeDocumentMapper">
+
+    <select id="findPageList" resultType="org.example.airag.modules.knowledgebase.vo.KnowledgeDocumentListItemVO">
+        SELECT
+        d.id,
+        d.category_id AS categoryId,
+        d.title,
+        d.document_code AS documentCode,
+        d.owner_dept AS ownerDept,
+        d.status,
+        d.current_version_id AS currentVersionId,
+        d.summary,
+        v.version_no AS currentVersionNo,
+        v.parse_status AS parseStatus,
+        v.vector_status AS vectorStatus,
+        v.chunk_count AS chunkCount,
+        d.created_at AS createdAt,
+        d.updated_at AS updatedAt
+        FROM knowledge_document d
+        LEFT JOIN knowledge_document_version v
+        ON d.current_version_id = v.id
+        AND v.del_flag = 0
+        WHERE d.del_flag = 0
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (
+            d.title LIKE CONCAT('%', #{query.keyword}, '%')
+            OR d.document_code LIKE CONCAT('%', #{query.keyword}, '%')
+            OR d.summary LIKE CONCAT('%', #{query.keyword}, '%')
+            )
+        </if>
+        <if test="query.categoryId != null">
+            AND d.category_id = #{query.categoryId}
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND d.status = #{query.status}
+        </if>
+        <if test="query.ownerDept != null and query.ownerDept != ''">
+            AND d.owner_dept LIKE CONCAT('%', #{query.ownerDept}, '%')
+        </if>
+
+        <if test="query.vectorStatus != null and query.vectorStatus != ''">
+            AND v.vector_status = #{query.vectorStatus}
+        </if>
+        ORDER BY d.created_at DESC
+    </select>
+</mapper>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.airag.modules.knowledgebase.mapper.KnowledgeChunkMapper">
+
+    <select id="findChunksByDocumentVersionId"
+            resultType="org.example.airag.modules.knowledgebase.entity.KnowledgeChunk">
+        select * from knowledge_chunk
+        where version_id = #{versionId}
+        and del_flag = 0
+        order by created_at desc
+    </select>
+</mapper>

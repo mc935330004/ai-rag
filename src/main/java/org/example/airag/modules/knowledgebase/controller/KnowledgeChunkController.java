@@ -5,14 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.airag.common.result.Result;
 import org.example.airag.modules.knowledgebase.entity.KnowledgeChunk;
 import org.example.airag.modules.knowledgebase.service.KnowledgeChunkService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/knowledge/chunks")
@@ -21,28 +14,28 @@ public class KnowledgeChunkController {
 
     private final KnowledgeChunkService chunkService;
 
+    /**
+     * 按文档版本查询切片列表。
+     *
+     * 用于管理端查看某个版本实际参与 RAG 检索的文本片段。
+     */
     @GetMapping("/page")
-    public Result<Page<KnowledgeChunk>> page(Page<KnowledgeChunk> page) {
-        return Result.success(chunkService.page(page));
+    public Result<Page<KnowledgeChunk>> page(Page<KnowledgeChunk> page,
+                                             @RequestParam("versionId") Long versionId) {
+        return Result.success(chunkService.findChunksByDocumentVersionId(page, versionId));
     }
 
-    @GetMapping("/{id}")
-    public Result<KnowledgeChunk> detail(@PathVariable Long id) {
-        return Result.success(chunkService.getById(id));
-    }
 
-    @PostMapping
-    public Result<Boolean> create(@RequestBody KnowledgeChunk chunk) {
-        return Result.success(chunkService.save(chunk));
-    }
-
-    @PutMapping
-    public Result<Boolean> update(@RequestBody KnowledgeChunk chunk) {
-        return Result.success(chunkService.updateById(chunk));
-    }
-
-    @DeleteMapping("/{id}")
-    public Result<Boolean> delete(@PathVariable Long id) {
-        return Result.success(chunkService.removeById(id));
+    /**
+     * 启用或禁用切片。
+     *
+     * enabled=false 后，该切片后续不应参与正式检索。
+     * 注意：当前只改 MySQL 状态，下一步再让查询服务过滤 enabled chunk。
+     */
+    @GetMapping("/enabled")
+    public Result<?> updateEnabled(@RequestParam("id") Long id,
+                                   @RequestParam("enabled") Integer enabled) {
+        chunkService.updateEnabled(id, enabled);
+        return Result.success("切片状态更新成功");
     }
 }

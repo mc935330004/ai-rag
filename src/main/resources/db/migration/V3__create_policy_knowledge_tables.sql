@@ -103,3 +103,34 @@ CREATE INDEX idx_knowledge_chunk_enabled
 
 CREATE UNIQUE INDEX uk_knowledge_chunk_version_index
     ON knowledge_chunk (version_id, chunk_index);
+
+-- 文件：src/main/resources/db/migration/V5__create_knowledge_query_log.sql
+
+CREATE TABLE IF NOT EXISTS knowledge_query_log (
+   id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+   question TEXT NOT NULL COMMENT '用户问题',
+   answer MEDIUMTEXT COMMENT '模型回答',
+   top_k INT NOT NULL DEFAULT 5 COMMENT '召回数量',
+   min_score DECIMAL(6, 4) COMMENT '最低相似度',
+    status VARCHAR(32) NOT NULL COMMENT '状态：SUCCESS、NO_RESULT、FAILED',
+    error_message VARCHAR(500) COMMENT '失败原因',
+    duration_ms BIGINT COMMENT '耗时毫秒',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+    ) COMMENT = '企业知识问答日志表';
+
+CREATE TABLE IF NOT EXISTS knowledge_query_reference (
+     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+     query_log_id BIGINT NOT NULL COMMENT '问答日志ID',
+     document_id BIGINT COMMENT '文档ID',
+     version_id BIGINT COMMENT '版本ID',
+     chunk_id BIGINT COMMENT '切片ID',
+     chunk_index INT COMMENT '切片序号',
+     source VARCHAR(255) COMMENT '来源文件名',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+    ) COMMENT = '企业知识问答引用表';
+
+CREATE INDEX idx_query_reference_log
+    ON knowledge_query_reference (query_log_id);
+
+CREATE INDEX idx_query_log_created
+    ON knowledge_query_log (created_at);
