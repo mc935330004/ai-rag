@@ -30,7 +30,6 @@ public class KnowledgeBaseVectorTaskServiceImpl extends ServiceImpl<KnowledgeBas
         }
         // 创建向量化任务
         KnowledgeBaseVectorTask task = new KnowledgeBaseVectorTask();
-        task.setKnowledgeBaseId(null);
         task.setDocumentId(documentId);
         task.setVersionId(versionId);
         task.setTaskType("VECTORIZE");

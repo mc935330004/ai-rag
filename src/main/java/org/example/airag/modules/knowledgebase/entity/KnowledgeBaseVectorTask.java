@@ -25,12 +25,6 @@ public class KnowledgeBaseVectorTask implements Serializable {
     private Long id;
 
     /**
-     * 知识库文件ID，对应 knowledge_base.id
-     */
-    @TableField("knowledge_base_id")
-    private Long knowledgeBaseId;
-
-    /**
      * 任务类型：VECTORIZE 向量化，RE_VECTORIZE 重新向量化，DELETE_VECTOR 删除向量
      */
     @TableField("task_type")

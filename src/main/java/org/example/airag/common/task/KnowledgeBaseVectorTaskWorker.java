@@ -89,7 +89,7 @@ public class KnowledgeBaseVectorTaskWorker {
         task.setErrorMessage(null);
         taskService.updateById(task);
 
-        log.info("知识库向量化任务完成: taskId={}, kbId={}", task.getId(), task.getKnowledgeBaseId());
+        log.info("知识库向量化任务完成: taskId={}, kbId={}", task.getId(), task.getVersionId());
     }
 
     /**
@@ -116,7 +116,7 @@ public class KnowledgeBaseVectorTaskWorker {
         task.setUpdatedAt(LocalDateTime.now());
         taskService.updateById(task);
         log.warn("知识库向量化任务失败: taskId={}, kbId={}, retry={}/{}, error={}",
-                task.getId(), task.getKnowledgeBaseId(), retryCount, maxRetryCount, e.getMessage(), e);
+                task.getId(), task.getVersionId(), retryCount, maxRetryCount, e.getMessage(), e);
     }
 
     /**
